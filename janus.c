@@ -4569,9 +4569,13 @@ gint main(int argc, char *argv[])
 	}
 	if(stun_server == NULL && turn_server == NULL) {
 		/* No STUN and TURN server provided for Janus: make sure it isn't on a private address */
-		if(IN_CLASSA(local_ip) || IN_CLASSB(local_ip) || IN_CLASSC(local_ip)) {
-			JANUS_LOG(LOG_WARN, "Janus is deployed on a private address (%s) but you didn't specify any STUN server! Expect trouble if this is supposed to work over the internet and not just in a LAN...\n", local_ip);
-		}
+		struct sockaddr_in addr;
+		if (inet_pton(AF_INET, local_ip, &addr) > 0) {
+			/* local_ip contains an IPv4 address */
+			long addr_l = ntohl(addr.sin_addr.s_addr);
+			if(IN_CLASSA(addr_l) || IN_CLASSB(addr_l) || IN_CLASSC(addr_l))
+                            JANUS_LOG(LOG_WARN, "Janus is deployed on a private address (%s) but you didn't specify any STUN server! Expect trouble if this is supposed to work over the internet and not just in a LAN...\n", local_ip);
+                }
 	}
 	/* Are we going to force BUNDLE and/or rtcp-mux? */
 	gboolean force_bundle = FALSE, force_rtcpmux = FALSE;
